@@ -38,10 +38,8 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="hotel_service", lifespan=lifespan)
-app.mount("/public/static", StaticFiles(directory="/public/static"),
-          name="public/static")
+app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
-
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
