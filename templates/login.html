@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}Đăng nhập{% endblock %}
+
+{% block head %}
+<style>
+  body { background-color: #f8f9fa; }
+  .login-container {
+    max-width: 450px;
+    margin: 100px auto;
+    padding: 30px;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  }
+  .login-logo {
+    text-align: center;
+    margin-bottom: 30px;
+  }
+  .login-logo h1 {
+    color: #0d6efd;
+    font-weight: bold;
+  }
+  .btn-login {
+    background-color: #0d6efd;
+    color: white;
+    font-weight: 600;
+    padding: 10px;
+    border-radius: 5px;
+    width: 100%;
+    border: 1px solid #0d6efd;
+    transition: background-color .2s, border-color .2s;
+  }
+  .btn-login:hover {
+    background-color: #0b5ed7;    /* xanh đậm hơn khi hover */
+    border-color:  #0a58ca;
+    color: white;
+  }
+  .btn-login:focus, .btn-login:active {
+    background-color: #0a58ca;
+    border-color:  #0a53be;
+    color: white;
+    box-shadow: 0 0 0 .2rem rgba(13,110,253,.5);
+  }
+  .divider {
+    display: flex;
+    align-items: center;
+    margin: 20px 0;
+  }
+  .divider::before, .divider::after {
+    content: "";
+    flex: 1;
+    border-bottom: 1px solid #dee2e6;
+  }
+  .divider span {
+    padding: 0 10px;
+    color: #6c757d;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="login-container">
+    <div class="login-logo">
+      <h1>QLPT</h1>
+      <p>Đăng nhập vào tài khoản của bạn</p>
+    </div>
+    {% if info %}
+      <div class="alert alert-success">{{ info }}</div>
+    {% endif %}
+    {% if error %}
+      <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
+    <form action="/account/login" method="post" class="mt-3">
+      <div class="mb-3">
+        <label for="email" class="form-label">Email</label>
+        <input type="email" class="form-control" id="email" name="email" required>
+      </div>
+      <div class="mb-3">
+        <label for="password" class="form-label">Mật khẩu</label>
+        <input type="password" class="form-control" id="password" name="password" required>
+      </div>
+      <div class="mb-3 form-check">
+        <input type="checkbox" class="form-check-input" id="remember" name="remember">
+        <label class="form-check-label" for="remember">Ghi nhớ đăng nhập</label>
+      </div>
+      <div class="d-flex justify-content-between mb-3">
+        <a href="/account/forgot-password" class="text-decoration-none">Quên mật khẩu?</a>
+      </div>
+      <button type="submit" class="btn btn-login">Đăng nhập</button>
+    </form>
+
+    <div class="divider">
+      <span>HOẶC</span>
+    </div>
+    <div class="d-grid gap-2">
+      <a href="/account/register" class="btn btn-outline-primary">Tạo tài khoản mới</a>
+    </div>
+    <div class="mt-4 text-center">
+      <a href="/" class="text-decoration-none">← Quay lại trang chủ</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

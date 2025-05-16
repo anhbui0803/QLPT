@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Thông báo{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <h2>Thông báo</h2>
+
+  {% for n in notifications %}
+    <div class="card mb-3">
+      <div class="card-body">
+        <small class="text-muted">
+          {{ n.created_at.strftime("%Y-%m-%d %H:%M") }}
+          {% if not n.read %}<span class="badge bg-warning text-dark">Mới</span>{% endif %}
+        </small>
+        <p class="mt-1">{{ n.message }}</p>
+
+        <!-- Link xem hợp đồng -->
+        <a href="{{ url_for('view_contract', booking_id=n.booking_id) }}"
+           class="btn btn-sm btn-outline-primary">
+          Xem hợp đồng
+        </a>
+
+        {% if n.type == 'renew_request' and n.status == 'pending' %}
+          <!-- Form chấp nhận / từ chối gia hạn -->
+          <form action="{{ url_for('renew_request_action', booking_id=n.booking_id) }}"
+                method="post" class="d-inline ms-2">
+            <button type="submit" name="action" value="accept"
+                    class="btn btn-sm btn-success">
+              Chấp nhận
+            </button>
+            <button type="submit" name="action" value="reject"
+                    class="btn btn-sm btn-danger ms-1">
+              Từ chối
+            </button>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+  {% else %}
+    <p class="text-muted">Bạn chưa có thông báo nào.</p>
+  {% endfor %}
+</div>
+{% endblock %}

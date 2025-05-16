@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Tin của tôi - QLPT{% endblock %}
+
+{% block head %}
+  <style>
+    /* Giữ style giống index.html */
+    .card-img-top {
+      height: 200px;
+      object-fit: cover;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <h2 class="mb-4">Tin đăng của tôi</h2>
+
+  {% if listings %}
+    <div class="row">
+      {% for l in listings %}
+        <div class="col-md-4 mb-4">
+          <div class="card h-100">
+            {% if l.images and l.images[0] %}
+              <img src="{{ l.images[0] }}" class="card-img-top" alt="Ảnh phòng">
+            {% endif %}
+            <div class="card-body d-flex flex-column">
+              <h5 class="card-title">{{ l.title }}</h5>
+              <p class="card-text text-truncate">{{ l.description }}</p>
+              <div class="mt-auto">
+                <p class="mb-1"><strong>Giá:</strong> {{ l.price | format_price }} VNĐ/tháng</p>
+                <a href="/listing/{{ l.id }}" class="btn btn-sm btn-primary">Xem chi tiết</a>
+                <a href="/listing/{{ l.id }}/edit" class="btn btn-sm btn-secondary ms-2">Sửa</a>
+              </div>
+            </div>
+            <div class="card-footer text-muted small">
+              {{ l.created_at.strftime("%Y-%m-%d %H:%M") }}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    {# Nếu có pagination (như index.html) bạn có thể chèn ở đây #}
+    {# 
+    <nav aria-label="Phân trang">
+      <ul class="pagination justify-content-center">
+        {% for p in range(1, pages+1) %}
+          <li class="page-item {% if p == page %}active{% endif %}">
+            <a class="page-link" href="?page={{p}}">{{ p }}</a>
+          </li>
+        {% endfor %}
+      </ul>
+    </nav>
+    #}
+
+  {% else %}
+    <p>Bạn chưa có tin đăng nào. <a href="/dang-tin">Tạo ngay</a></p>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block title %}{{ listing.title }}{% endblock %}
+
+{% block head %}
+<style>
+  body { background-color: #f8f9fa; }
+  .images-gallery img {
+    max-width: 200px;
+    margin: 5px;
+    border-radius: 5px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    cursor: pointer;
+    transition: opacity .2s;
+  }
+  .images-gallery img:hover {
+    opacity: .8;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <h1>{{ listing.title }}</h1>
+  <p class="text-muted">
+    Đăng bởi: {{ listing.owner }} | 
+    Ngày: {{ listing.created_at.strftime('%Y-%m-%d %H:%M') }}
+  </p>
+
+  <div class="mb-4">
+    <label class="form-label">Mô tả &amp; Tiện ích phòng</label>
+    <p>{{ listing.description.replace('\n','<br>') | safe }}</p>
+  </div>
+
+  <ul class="list-group list-group-flush mb-4">
+    <li class="list-group-item">Giá: {{ listing.price | format_price }} VNĐ/tháng</li>
+    <li class="list-group-item">Diện tích: {{ listing.area }} m²</li>
+    <li class="list-group-item">Quận/Huyện: {{ district_map.get(listing.district, listing.district) }}</li>
+    <li class="list-group-item">Loại: {{ type_map.get(listing.type, listing.type.replace('_',' ')|title) }}</li>
+    <li class="list-group-item">Số điện thoại chủ: {{ listing.phone }}</li>
+    <li class="list-group-item">Số phòng còn trống: {{ listing.slots }}</li>
+  </ul>
+
+  <h5 class="mt-4">Hình ảnh phòng</h5>
+  <div class="row images-gallery mb-4">
+    {% for img in listing.images %}
+      <div class="col-6 col-md-3 mb-3 text-center">
+        <img
+          src="{{ img }}"
+          alt="Ảnh phòng"
+          class="img-thumbnail"
+          data-bs-toggle="modal"
+          data-bs-target="#imageModal"
+          data-full="{{ img }}"
+        >
+      </div>
+    {% endfor %}
+  </div>
+
+  {% if listing.contract_images %}
+    <h5 class="mt-4">Hình ảnh hợp đồng</h5>
+    <div class="row images-gallery mb-4">
+      {% for img in listing.contract_images %}
+        <div class="col-6 col-md-3 mb-3 text-center">
+          <img
+            src="{{ img }}"
+            alt="Ảnh hợp đồng"
+            class="img-thumbnail"
+            data-bs-toggle="modal"
+            data-bs-target="#imageModal"
+            data-full="{{ img }}"
+          >
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <div class="d-flex mb-3">
+    {% set user = request.session.get("user") %}
+
+    {% if user and user.email == listing.owner %}
+      <a href="/listing/{{ listing.id }}/edit" class="btn btn-warning me-2">
+        ✎ Sửa tin đăng
+      </a>
+    {% endif %}
+
+    {% if user and user.email != listing.owner %}
+      {% if not booking %}
+        <a href="/listing/{{ listing.id }}/book"
+           class="btn btn-success me-2">
+          ✍️ Ký hợp đồng
+        </a>
+      {% else %}
+        <a href="/account/bookings/{{ booking.id }}/sign"
+           class="btn btn-success me-2">
+          ✍️ Ký hợp đồng
+        </a>
+      {% endif %}
+    {% endif %}
+
+    <a href="{{ back_url }}" class="btn btn-secondary">
+      ← Quay lại
+    </a>
+  </div>
+</div>
+
+<!-- Modal để xem ảnh cỡ lớn -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content border-0 bg-transparent">
+      <div class="modal-body p-0">
+        <img src="" id="modalImage" class="img-fluid w-100" alt="Full size">
+      </div>
+    </div>
+  </div>
+</div>
+
+{% block scripts %}
+<script>
+  // Khi mở modal, lấy URL đầy đủ từ data-full
+  var imageModal = document.getElementById('imageModal');
+  imageModal.addEventListener('show.bs.modal', function (e) {
+    var thumb = e.relatedTarget;
+    var fullImg = thumb.getAttribute('data-full');
+    document.getElementById('modalImage').src = fullImg;
+  });
+</script>
+{% endblock %}
+{% endblock %}

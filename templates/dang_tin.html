@@ -1,0 +1,261 @@
+{% extends "base.html" %}
+{% block title %}Đăng tin phòng trọ{% endblock %}
+
+{% block head %}
+  {# Không cần CSS custom mới, vì ta dùng Bootstrap #}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <h2 class="mb-4">Đăng tin phòng trọ</h2>
+
+  <form action="/dang-tin" method="post" enctype="multipart/form-data">
+    <!-- Tiêu đề -->
+    <div class="mb-3">
+      <label for="title" class="form-label">Tiêu đề</label>
+      <input
+        type="text"
+        class="form-control"
+        id="title"
+        name="title"
+        required
+      >
+    </div>
+    
+    <!-- Tiện ích phòng -->
+    <div class="mb-3">
+      <label class="form-label">Tiện ích phòng</label>
+      <div class="d-flex flex-wrap">
+        <input type="checkbox" class="btn-check" id="feat_chungchu"   autocomplete="off" value="Ở chung chủ" name="features">
+        <label class="btn btn-outline-secondary me-2 mb-2" for="feat_chungchu">Ở chung chủ</label>
+
+        <input type="checkbox" class="btn-check" id="feat_vs_khekin"  autocomplete="off" value="Vệ sinh khép kín" name="features">
+        <label class="btn btn-outline-secondary me-2 mb-2" for="feat_vs_khekin">Vệ sinh khép kín</label>
+
+        <input type="checkbox" class="btn-check" id="feat_vs_rieng"   autocomplete="off" value="Vệ sinh riêng" name="features">
+        <label class="btn btn-outline-secondary me-2 mb-2" for="feat_vs_rieng">Vệ sinh riêng</label>
+
+        <input type="checkbox" class="btn-check" id="feat_dieuhoa"   autocomplete="off" value="Có điều hòa" name="features">
+        <label class="btn btn-outline-secondary me-2 mb-2" for="feat_dieuhoa">Có điều hòa</label>
+
+        <input type="checkbox" class="btn-check" id="feat_nonglanh"  autocomplete="off" value="Có nóng lạnh" name="features">
+        <label class="btn btn-outline-secondary me-2 mb-2" for="feat_nonglanh">Có nóng lạnh</label>
+
+        <!-- bạn có thể thêm các tiện ích khác tương tự -->
+      </div>
+    </div>
+
+    <!-- Mô tả -->
+    <div class="mb-3">
+      <label for="description" class="form-label">Mô tả</label>
+      <textarea
+        class="form-control"
+        id="description"
+        name="description"
+        rows="4"
+      ></textarea>
+    </div>
+
+
+    <!-- Giá / Diện tích / Khu vực / Loại phòng -->
+    <div class="row">
+      <div class="col-md-3 mb-3">
+        <label for="price" class="form-label">Giá (VNĐ/tháng)</label>
+        <input
+          type="number"
+          class="form-control"
+          id="price"
+          name="price"
+          min="0"
+          step="1"
+          required
+        >
+      </div>
+      <div class="col-md-3 mb-3">
+        <label for="area" class="form-label">Diện tích (m²)</label>
+        <input
+          type="number"
+          class="form-control"
+          id="area"
+          name="area"
+          min="0"
+          step="0.1"
+          required
+        >
+      </div>
+      <div class="col-md-3 mb-3">
+        <label for="district" class="form-label">Khu vực (Quận)</label>
+        <select
+          class="form-select"
+          id="district"
+          name="district"
+          required
+        >
+          <option value="">Chọn khu vực</option>
+          <option value="ba_dinh">Quận Ba Đình</option>
+          <option value="hoan_kiem">Quận Hoàn Kiếm</option>
+          <option value="dong_da">Quận Đống Đa</option>
+          <option value="hai_ba_trung">Quận Hai Bà Trưng</option>
+          <option value="tay_ho">Quận Tây Hồ</option>
+          <option value="cau_giay">Quận Cầu Giấy</option>
+          <option value="thanh_xuan">Quận Thanh Xuân</option>
+          <option value="ha_dong">Quận Hà Đông</option>
+          <option value="hoang_mai">Quận Hoàng Mai</option>
+          <option value="long_bien">Quận Long Biên</option>
+          <option value="bac_tu_liem">Quận Bắc Từ Liêm</option>
+          <option value="nam_tu_liem">Quận Nam Từ Liêm</option>
+        </select>
+      </div>
+      <div class="col-md-3 mb-3">
+        <label for="type" class="form-label">Loại phòng</label>
+        <select
+          class="form-select"
+          id="type"
+          name="type"
+          required
+        >
+          <option value="">Chọn loại</option>
+          <option value="phong_tro">Phòng trọ</option>
+          <option value="nha_nguyen_can">Nhà nguyên căn</option>
+          <option value="chung_cu">Chung cư</option>
+          <option value="biet_thu">Biệt thự</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- ← NEW: phone + slots -->
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label for="phone" class="form-label">Số điện thoại chủ</label>
+        <input
+          type="text"
+          class="form-control"
+          id="phone"
+          name="phone"
+          required
+        >
+      </div>
+      <div class="col-md-6 mb-3">
+        <label for="slots" class="form-label">Số phòng còn trống</label>
+        <input
+          type="number"
+          class="form-control"
+          id="slots"
+          name="slots"
+          min="1"
+          required
+        >
+      </div>
+    </div>
+    <!-- END NEW -->
+
+    <!-- Preview ảnh -->
+    <div class="mb-3">
+        <div id="image-preview" class="d-flex flex-wrap"></div>
+    </div>
+
+    <!-- Hình ảnh -->
+    <div class="mb-3">
+      <label for="images" class="form-label">Hình ảnh phòng</label>
+      <input
+        type="file"
+        class="form-control"
+        id="images"
+        name="images"
+        accept="image/*"
+        multiple
+        required
+      >
+    </div>
+
+    <!-- Container để preview ảnh hợp đồng -->
+    <div id="contract-image-preview" class="d-flex flex-wrap mb-3"></div>
+
+    <!-- Ảnh hợp đồng -->
+    <div class="mb-3">
+      <label for="contract_images" class="form-label">Ảnh hợp đồng</label>
+      <input
+        type="file"
+        class="form-control"
+        id="contract_images"
+        name="contract_images"
+        accept="image/*"
+        multiple
+      >
+    </div>
+
+    <!-- Nút hành động -->
+    <div class="d-flex gap-2">
+      <button type="submit" class="btn btn-primary">Đăng tin</button>
+      <a href="/" class="btn btn-secondary">Hủy</a>
+    </div>
+  </form>
+</div>
+
+{% block scripts %}
+<script>
+  // 1) Preview ảnh như cũ
+  const inputImages = document.getElementById('images');
+  const previewContainer = document.getElementById('image-preview');
+  inputImages.addEventListener('change', function() {
+    previewContainer.innerHTML = '';
+    Array.from(this.files).forEach(file => {
+      if (!file.type.startsWith('image/')) return;
+      const img = document.createElement('img');
+      img.src = URL.createObjectURL(file);
+      img.onload = () => URL.revokeObjectURL(img.src);
+      img.style.width = '120px';
+      img.style.height = '80px';
+      img.style.objectFit = 'cover';
+      img.classList.add('me-2','mb-2');
+      previewContainer.appendChild(img);
+    });
+  });
+
+  // 2) Logic cập nhật Mô tả khi tick tiện ích, mỗi dòng bắt đầu bằng "- "
+  const featureChecks = document.querySelectorAll('input[name="features"]');
+  const descField     = document.getElementById('description');
+
+  function updateDescription() {
+    const selected = Array.from(featureChecks)
+                          .filter(ch => ch.checked)
+                          .map(ch => ch.value);
+    descField.value = selected.map(item => `- ${item}`).join('\n');
+  }
+  featureChecks.forEach(ch => ch.addEventListener('change', updateDescription));
+
+  // 3) Bắt buộc phải chọn tối thiểu một tiện ích
+  const form = document.querySelector('form');
+  form.addEventListener('submit', function(e) {
+    // reset custom validity
+    featureChecks.forEach(ch => ch.setCustomValidity(''));
+    // nếu không có checkbox nào được chọn
+    if (!Array.from(featureChecks).some(ch => ch.checked)) {
+      // gán lỗi lên checkbox đầu tiên để browser hiển thị tooltip
+      featureChecks[0].setCustomValidity('Vui lòng chọn ít nhất một tiện ích.');
+      featureChecks[0].reportValidity();
+      e.preventDefault();
+    }
+  });
+
+  // 4) Preview ảnh hợp đồng
+  const inputContractImages     = document.getElementById('contract_images');
+  const contractPreviewContainer = document.getElementById('contract-image-preview');
+
+  inputContractImages.addEventListener('change', function() {
+    contractPreviewContainer.innerHTML = '';
+    Array.from(this.files).forEach(file => {
+      if (!file.type.startsWith('image/')) return;
+      const img = document.createElement('img');
+      img.src = URL.createObjectURL(file);
+      img.onload = () => URL.revokeObjectURL(img.src);
+      img.style.width = '120px';
+      img.style.height = '80px';
+      img.style.objectFit = 'cover';
+      img.classList.add('me-2','mb-2');
+      contractPreviewContainer.appendChild(img);
+    });
+  });
+</script>
+{% endblock %}
+{% endblock %}

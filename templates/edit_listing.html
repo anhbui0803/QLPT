@@ -1,0 +1,297 @@
+{% extends "base.html" %}
+{% block title %}Sửa tin: {{ listing.title }}{% endblock %}
+
+{% block head %}
+<style>
+  .images-gallery img {
+    width: 120px;
+    height: 80px;
+    object-fit: cover;
+    margin: 5px;
+    border-radius: 4px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <h2 class="mb-4">Chỉnh sửa tin đăng</h2>
+
+  {# 1) Đóng gói tất cả các trường vào form có id="editForm" #}
+  <form
+    id="editForm"
+    action="/listing/{{ listing.id }}/edit"
+    method="post"
+    enctype="multipart/form-data"
+  >
+    <div class="mb-3">
+      <label class="form-label">Tiêu đề</label>
+      <input name="title" type="text" class="form-control"
+             value="{{ listing.title }}" required>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Tiện ích phòng</label>
+      <div class="d-flex flex-wrap">
+        {% set feats = listing.description.split('\n') %}
+        <input type="checkbox" class="btn-check" id="feat_chungchu"   name="features" value="Ở chung chủ"
+               {% if '- Ở chung chủ' in feats %}checked{% endif %} autocomplete="off">
+        <label class="btn btn-outline-secondary me-2 mb-2" for="feat_chungchu">Ở chung chủ</label>
+
+        <input type="checkbox" class="btn-check" id="feat_vs_khekin"  name="features" value="Vệ sinh khép kín"
+               {% if '- Vệ sinh khép kín' in feats %}checked{% endif %} autocomplete="off">
+        <label class="btn btn-outline-secondary me-2 mb-2" for="feat_vs_khekin">Vệ sinh khép kín</label>
+
+        <input type="checkbox" class="btn-check" id="feat_vs_rieng"   name="features" value="Vệ sinh riêng"
+               {% if '- Vệ sinh riêng' in feats %}checked{% endif %} autocomplete="off">
+        <label class="btn btn-outline-secondary me-2 mb-2" for="feat_vs_rieng">Vệ sinh riêng</label>
+
+        <input type="checkbox" class="btn-check" id="feat_dieuhoa"    name="features" value="Có điều hòa"
+               {% if '- Có điều hòa' in feats %}checked{% endif %} autocomplete="off">
+        <label class="btn btn-outline-secondary me-2 mb-2" for="feat_dieuhoa">Có điều hòa</label>
+
+        <input type="checkbox" class="btn-check" id="feat_nonglanh"   name="features" value="Có nóng lạnh"
+               {% if '- Có nóng lạnh' in feats %}checked{% endif %} autocomplete="off">
+        <label class="btn btn-outline-secondary me-2 mb-2" for="feat_nonglanh">Có nóng lạnh</label>
+      </div>
+    </div>
+    <div class="mb-3">
+      <label for="description" class="form-label">Mô tả</label>
+      <textarea id="description" name="description" rows="4"
+                class="form-control">{{ listing.description }}</textarea>
+    </div>
+    <div class="row">
+      <div class="col-md-3 mb-3">
+        <label class="form-label">Giá (VNĐ/tháng)</label>
+        <input name="price" type="number" min="0" step="1"
+               class="form-control" value="{{ listing.price }}" required>
+      </div>
+      <div class="col-md-3 mb-3">
+        <label class="form-label">Diện tích (m²)</label>
+        <input name="area" type="number" min="0" step="0.1"
+               class="form-control" value="{{ listing.area }}" required>
+      </div>
+      <div class="col-md-3 mb-3">
+        <label for="district" class="form-label">Khu vực (Quận)</label>
+        <select name="district" id="district" class="form-select" required>
+          {% for code, label in district_map.items() %}
+            <option value="{{ code }}"
+              {% if code == listing.district %}selected{% endif %}>
+              {{ label }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3 mb-3">
+        <label class="form-label">Loại phòng</label>
+        <select name="type" class="form-select" required>
+          {% for code, label in type_map.items() %}
+            <option value="{{ code }}"
+              {% if code == listing.type %}selected{% endif %}>
+              {{ label }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label for="phone" class="form-label">Số điện thoại chủ</label>
+        <input
+          type="text"
+          class="form-control"
+          id="phone"
+          name="phone"
+          value="{{ listing.phone }}"
+          required
+        >
+      </div>
+      <div class="col-md-6 mb-3">
+        <label for="slots" class="form-label">Số phòng còn trống</label>
+        <input
+          type="number"
+          class="form-control"
+          id="slots"
+          name="slots"
+          min="1"
+          value="{{ listing.slots }}"
+          required
+        >
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Ảnh hiện tại (chọn để xóa)</label>
+      <div class="row">
+        {% for img in listing.images %}
+          <div class="col-auto mb-3 d-flex flex-column align-items-center">
+            <img src="{{ img }}" alt="Ảnh cũ" class="img-thumbnail">
+
+            <div class="form-check form-check-inline mt-2">
+              <input
+                class="form-check-input me-1"
+                type="checkbox"
+                name="remove_images"
+                value="{{ img }}"
+                id="remove-{{ loop.index }}"
+              >
+              <label
+                class="form-check-label"
+                for="remove-{{ loop.index }}"
+              >Xóa</label>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Container để preview -->
+    <div id="image-preview-edit" class="d-flex flex-wrap mb-2"></div>
+
+    <!-- Thêm ảnh phòng mới -->
+    <div class="mb-3">
+        <label for="new_images" class="form-label">Thêm ảnh phòng mới</label>
+        <input
+            name="images"
+            id="new_images"
+            type="file"
+            accept="image/*"
+            multiple
+            class="form-control"
+        >
+        <div class="form-text">Bạn có thể chọn nhiều ảnh để thêm.</div>
+    </div>
+
+    <!-- Ảnh hợp đồng hiện tại (chọn để xóa) -->
+    <div class="mb-3">
+      <label class="form-label">Ảnh hợp đồng hiện tại (chọn để xóa)</label>
+      <div class="row">
+        {% for img in listing.contract_images %}
+          <div class="col-auto mb-3 d-flex flex-column align-items-center">
+            <img src="{{ img }}" alt="Ảnh hợp đồng cũ" class="img-thumbnail">
+            <div class="form-check form-check-inline mt-2">
+              <input
+                class="form-check-input me-1"
+                type="checkbox"
+                name="remove_contract_images"
+                value="{{ img }}"
+                id="remove-contract-{{ loop.index }}"
+              >
+              <label class="form-check-label" for="remove-contract-{{ loop.index }}">
+                Xóa
+              </label>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div id="contract-preview-edit" class="d-flex flex-wrap mb-2"></div>
+    
+    <div class="mb-3">
+      <label class="form-label">Thêm ảnh hợp đồng mới</label>
+      <input
+        name="contract_images"
+        id="contract_images"
+        type="file"
+        accept="image/*"
+        multiple
+        class="form-control"
+      >
+    </div>
+  </form>
+
+  {# 2) Nhóm ba nút ra cùng một hàng #}
+  <div class="d-flex gap-2 mt-3">
+    <!-- Nút Lưu thay đổi sẽ submit form có id="editForm" -->
+    <button type="submit" form="editForm" class="btn btn-primary">
+      Lưu thay đổi
+    </button>
+
+    <!-- Nút Hủy quay về chi tiết -->
+    <a href="/listing/{{ listing.id }}" class="btn btn-secondary">
+      Hủy
+    </a>
+
+    <!-- Form và nút Xóa tin đăng -->
+    <form
+      action="/listing/{{ listing.id }}/delete"
+      method="post"
+      onsubmit="return confirm('Bạn có chắc muốn xóa tin đăng này?');"
+      class="m-0"
+    >
+      <button type="submit" class="btn btn-danger">
+        Xóa tin đăng
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // 1) Bật/tắt Mô tả tự động từ checkbox
+  const featureChecks = document.querySelectorAll('input[name="features"]');
+  const descField     = document.getElementById('description');
+  function updateDescription() {
+    const selected = Array.from(featureChecks)
+                          .filter(ch => ch.checked)
+                          .map(ch => ch.value);
+    descField.value = selected.map(item => `- ${item}`).join('\n');
+  }
+  featureChecks.forEach(ch => ch.addEventListener('change', updateDescription));
+
+  // 2) Bắt buộc chọn ít nhất 1 tiện ích
+  const form = document.querySelector('form');
+  form.addEventListener('submit', function(e) {
+    featureChecks.forEach(ch => ch.setCustomValidity(''));
+    if (!Array.from(featureChecks).some(ch => ch.checked)) {
+      featureChecks[0].setCustomValidity('Vui lòng chọn ít nhất một tiện ích.');
+      featureChecks[0].reportValidity();
+      e.preventDefault();
+    }
+  });
+
+  // 3) Preview ảnh hợp đồng mới trong trang edit
+  const inputEditContract = document.getElementById('contract_images');
+  const editContractContainer = document.getElementById('contract-preview-edit');
+
+  if (inputEditContract) {
+    inputEditContract.addEventListener('change', function() {
+      editContractContainer.innerHTML = '';
+      Array.from(this.files).forEach(file => {
+        if (!file.type.startsWith('image/')) return;
+        const img = document.createElement('img');
+        img.src = URL.createObjectURL(file);
+        img.onload = () => URL.revokeObjectURL(img.src);
+        img.style.width = '120px';
+        img.style.height = '80px';
+        img.style.objectFit = 'cover';
+        img.classList.add('me-2','mb-2');
+        editContractContainer.appendChild(img);
+      });
+    });
+  }
+
+  // Preview ảnh phòng mới trong trang edit
+  const inputEditImages     = document.getElementById('new_images');
+  const editImagesContainer = document.getElementById('image-preview-edit');
+
+  if (inputEditImages) {
+    inputEditImages.addEventListener('change', function() {
+      editImagesContainer.innerHTML = '';
+      Array.from(this.files).forEach(file => {
+        if (!file.type.startsWith('image/')) return;
+        const img = document.createElement('img');
+        img.src = URL.createObjectURL(file);
+        img.onload = () => URL.revokeObjectURL(img.src);
+        img.style.width      = '120px';
+        img.style.height     = '80px';
+        img.style.objectFit  = 'cover';
+        img.classList.add('me-2','mb-2');
+        editImagesContainer.appendChild(img);
+      });
+    });
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Hợp đồng của tôi{% endblock %}
+
+{% block head %}
+<style>
+  .card-img-top { height: 200px; object-fit: cover; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <h2>Hợp đồng của tôi</h2>
+  {% if bookings %}
+    <ul class="list-group mb-4">
+      {% for b in bookings %}
+        <li class="list-group-item">
+          <h5>{{ b.listing_title }}</h5>
+          <p>
+            <strong>Thời gian:</strong>
+            {{ b.start_date.strftime('%Y-%m-%d') }} – {{ b.end_date.strftime('%Y-%m-%d') }}
+          </p>
+          <p>
+            <strong>Trạng thái:</strong>
+            {% if b.status == 'pending' %}
+              <span class="badge bg-secondary">Chờ xác nhận</span>
+            {% elif b.status == 'accepted' %}
+              <span class="badge bg-success">Đã chấp nhận</span>
+            {% else %}
+              <span class="badge bg-danger">Đã từ chối</span>
+            {% endif %}
+          </p>
+
+          {# Nếu là chủ và đang pending thì cho link vào trang ký/từ chối #}
+          {% if b.is_owner and b.status == 'pending' %}
+            <a href="{{ url_for('sign_contract', booking_id=b.id) }}"
+               class="btn btn-primary btn-sm">
+              Xem & ký hợp đồng
+            </a>
+          {% endif %}
+
+          {# Nếu đã được ký, hiển thị link tới trang contract đầy đủ #}
+          {% if b.status == 'accepted' %}
+            <p class="mt-2">
+              <strong>Hợp đồng:</strong>
+              <a href="{{ url_for('view_contract', booking_id=b.id) }}" target="_blank">
+                Xem hợp đồng đầy đủ
+              </a>
+            </p>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>Bạn chưa có hợp đồng nào.</p>
+  {% endif %}
+</div>
+{% endblock %}

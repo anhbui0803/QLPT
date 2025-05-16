@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Truy cập bị từ chối{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <div class="card border-warning">
+    <div class="card-header bg-warning text-white">
+      Thông báo
+    </div>
+    <div class="card-body">
+      <p class="card-text">{{ message }}</p>
+      <a href="/" class="btn btn-primary">Quay lại Trang Chủ</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Hợp đồng – {{ listing.title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <h2>Hợp đồng: {{ listing.title }}</h2>
+  <p><strong>Phòng:</strong> {{ listing.title }}</p>
+  <p><strong>Người thuê:</strong> {{ booking.tenant }}</p>
+  <p><strong>Chủ nhà:</strong> {{ listing.owner }}</p>
+  <p><strong>Thời gian:</strong>
+     {{ booking.start_date.strftime("%Y-%m-%d") }}
+     – {{ booking.end_date.strftime("%Y-%m-%d") }}
+  </p>
+  <hr>
+  <h5>Thông tin người thuê</h5>
+  <p><strong>Họ và tên:</strong> {{ booking.tenant_name }}</p>
+  <p><strong>Số điện thoại:</strong> {{ booking.tenant_phone }}</p>
+  <p><strong>CMND/CCCD:</strong> {{ booking.tenant_id_card }}</p>
+  <h5>Chữ ký người thuê</h5>
+  {% if booking.tenant_signature %}
+    <a href="{{ booking.tenant_signature }}" target="_blank">
+      <img src="{{ booking.tenant_signature }}"
+           class="img-thumbnail mb-4"
+           style="max-width:200px; cursor:pointer;"
+           alt="Tenant signature">
+    </a>
+  {% else %}
+    <p class="text-muted fst-italic">Chưa có chữ ký của người thuê.</p>
+  {% endif %}
+  <h5>Chữ ký chủ trọ</h5>
+  {% if booking.owner_signature %}
+    <a href="{{ booking.owner_signature }}" target="_blank">
+      <img src="{{ booking.owner_signature }}"
+           class="img-thumbnail"
+           style="max-width:200px; cursor:pointer;"
+           alt="Owner signature">
+    </a>
+  {% else %}
+    <p class="text-muted fst-italic">Chưa có chữ ký của chủ trọ.</p>
+  {% endif %}
+
+  {# ---- NÚT GIA HẠN CHỈ HIỂN THỊ KHI ĐÃ ĐƯỢC CHẤP NHẬN VÀ NGƯỜI XEM LÀ TENANT ---- #}
+  {% if booking.status == 'accepted' and user.email == booking.tenant %}
+    <div class="mt-4">
+      <a href="{{ url_for('book_listing_page', listing_id=listing.id) }}"
+         class="btn btn-warning">
+        Gia hạn hợp đồng
+      </a>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

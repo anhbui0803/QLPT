@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Yêu cầu gia hạn hợp đồng{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <h2>Yêu cầu gia hạn hợp đồng</h2>
+
+  <p><strong>Phòng:</strong> {{ listing.title }}</p>
+  <p><strong>Người thuê:</strong> {{ booking.tenant }}</p>
+  <p><strong>Thời gian hiện tại:</strong>
+     {{ booking.start_date.strftime("%Y-%m-%d") }}
+     – {{ booking.end_date.strftime("%Y-%m-%d") }}
+  </p>
+  <p><strong>Ngày kết thúc mới:</strong>
+     {{ notif.new_end_date.strftime("%Y-%m-%d") }}
+  </p>
+  <hr>
+
+  <form action="" method="post">
+    <button type="submit" name="action" value="accept" class="btn btn-primary">
+      Chấp nhận
+    </button>
+    <button type="submit" name="action" value="reject" class="btn btn-danger ms-2">
+      Từ chối
+    </button>
+    <a href="{{ url_for('my_bookings') }}" class="btn btn-secondary ms-2">Hủy</a>
+  </form>
+</div>
+{% endblock %}

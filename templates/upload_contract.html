@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Quản lý ảnh hợp đồng{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <h2 class="mb-4">Ảnh hợp đồng: {{ listing.title }}</h2>
+
+  <form method="post" enctype="multipart/form-data">
+    {% if booking.contract_images %}
+    <div class="mb-3">
+      <label class="form-label">Ảnh hiện có</label>
+      <div class="d-flex flex-wrap">
+        {% for url in booking.contract_images %}
+        <div class="me-3 mb-3 text-center">
+          <img src="{{ url }}" style="width:120px;height:80px;object-fit:cover;"><br>
+          <input type="checkbox" name="remove_images" value="{{ url }}"> Xóa
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="mb-3">
+      <label for="images" class="form-label">Chọn ảnh mới</label>
+      <input type="file" id="images" name="images" class="form-control" accept="image/*" multiple>
+    </div>
+
+    <div id="preview-new" class="d-flex flex-wrap mb-3"></div>
+
+    <button type="submit" class="btn btn-primary">Lưu ảnh</button>
+    <a href="/listing/{{ listing.id }}" class="btn btn-secondary ms-2">Hủy</a>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Preview ảnh mới trước khi upload
+const input = document.getElementById('images');
+const preview = document.getElementById('preview-new');
+input.addEventListener('change', () => {
+  preview.innerHTML = '';
+  Array.from(input.files).forEach(file => {
+    if (!file.type.startsWith('image/')) return;
+    const img = document.createElement('img');
+    img.src = URL.createObjectURL(file);
+    img.style.width = '120px';
+    img.style.height= '80px';
+    img.style.objectFit = 'cover';
+    img.classList.add('me-2','mb-2');
+    preview.appendChild(img);
+    img.onload = () => URL.revokeObjectURL(img.src);
+  });
+});
+</script>
+{% endblock %}

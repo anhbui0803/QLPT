@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}
+  {% if booking %}Gia hạn hợp đồng{% else %}Ký & Đặt phòng{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <h2 class="mb-4">
+    {% if booking %}Gia hạn hợp đồng{% else %}Ký & Đặt phòng{% endif %}
+  </h2>
+
+  <form action="" method="post" enctype="multipart/form-data">
+    {% if booking %}
+      <!-- Renew existing booking -->
+      <div class="mb-3">
+        <label class="form-label">Bắt đầu</label>
+        <p>{{ booking.start_date.strftime("%Y-%m-%d") }}</p>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Kết thúc hiện tại</label>
+        <p>{{ booking.end_date.strftime("%Y-%m-%d") }}</p>
+      </div>
+      <div class="mb-3">
+        <label for="end_date" class="form-label">Ngày kết thúc mới</label>
+        <input type="date"
+               id="end_date"
+               name="end_date"
+               class="form-control"
+               min="{{ booking.end_date.strftime('%Y-%m-%d') }}"
+               value="{{ booking.end_date.strftime('%Y-%m-%d') }}"
+               required>
+      </div>
+      <button type="submit" class="btn btn-primary">Gia hạn</button>
+
+    {% else %}
+      <!-- New booking: dates + tenant info + signature -->
+      <div class="mb-3">
+        <label for="start_date" class="form-label">Ngày bắt đầu</label>
+        <input type="date"
+               id="start_date"
+               name="start_date"
+               class="form-control"
+               min="{{ today }}"
+               value="{{ today }}"
+               required>
+      </div>
+      <div class="mb-3">
+        <label for="end_date" class="form-label">Ngày kết thúc</label>
+        <input type="date"
+               id="end_date"
+               name="end_date"
+               class="form-control"
+               min="{{ today }}"
+               value="{{ today }}"
+               required>
+      </div>
+
+      <hr>
+
+      <div class="mb-3">
+        <label for="tenant_name" class="form-label">Họ và tên</label>
+        <input type="text"
+               id="tenant_name"
+               name="tenant_name"
+               class="form-control"
+               required>
+      </div>
+      <div class="mb-3">
+        <label for="tenant_phone" class="form-label">Số điện thoại</label>
+        <input type="text"
+               id="tenant_phone"
+               name="tenant_phone"
+               class="form-control"
+               required>
+      </div>
+      <div class="mb-3">
+        <label for="tenant_id_card" class="form-label">CCCD/CMND</label>
+        <input type="text"
+               id="tenant_id_card"
+               name="tenant_id_card"
+               class="form-control"
+               required>
+      </div>
+      <div class="mb-3">
+        <label for="signature" class="form-label">Chữ ký điện tử</label>
+        <input type="file"
+               id="signature"
+               name="signature"
+               accept="image/*"
+               class="form-control"
+               required>
+      </div>
+      <button type="submit" class="btn btn-success">
+        Xác nhận ký &amp; đặt phòng
+      </button>
+    {% endif %}
+
+    <a href="/listing/{{ listing.id }}" class="btn btn-secondary ms-2">Hủy</a>
+  </form>
+</div>
+{% endblock %}

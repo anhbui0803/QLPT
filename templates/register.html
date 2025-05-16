@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}Đăng Ký{% endblock %}
+
+{% block head %}
+<style>
+  body { background-color: #f8f9fa; }
+  .register-container {
+    max-width: 550px;
+    margin: 50px auto;
+    padding: 30px;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="register-container">
+    <h2 class="text-center mb-4">Đăng ký tài khoản</h2>
+    {% if error %}
+      <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
+    <form id="registerForm">
+      <div class="mb-3">
+        <label class="form-label d-block">Loại tài khoản</label>
+        <div class="btn-group w-100 mb-3" role="group" aria-label="Loại tài khoản">
+          <input
+            type="radio"
+            class="btn-check"
+            name="accountType"
+            id="accountTypeCustomer"
+            value="customer"
+            autocomplete="off"
+            required
+          >
+          <label class="btn btn-outline-primary w-50" for="accountTypeCustomer">
+            Người thuê
+          </label>
+
+          <input
+            type="radio"
+            class="btn-check"
+            name="accountType"
+            id="accountTypeAgent"
+            value="agent"
+            autocomplete="off"
+            required
+          >
+          <label class="btn btn-outline-primary w-50" for="accountTypeAgent">
+            Chủ trọ
+          </label>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Họ</label>
+          <input type="text" class="form-control" id="firstName" required>
+        </div>
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Tên</label>
+          <input type="text" class="form-control" id="lastName" required>
+        </div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-control" id="email" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Số điện thoại</label>
+        <input type="tel" class="form-control" id="phone" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Ngày sinh</label>
+        <input type="date" class="form-control" id="dateBirth" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Mật khẩu</label>
+        <input type="password" class="form-control" id="password" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Xác nhận mật khẩu</label>
+        <input type="password" class="form-control" id="confirmPassword" required>
+      </div>
+      <div class="mb-3 form-check">
+        <input type="checkbox" class="form-check-input" id="terms" required>
+        <label class="form-check-label">Tôi đồng ý với điều khoản sử dụng</label>
+      </div>
+      <div class="d-grid">
+        <button type="submit" class="btn btn-primary">Đăng ký</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const form = document.getElementById('registerForm');
+  form?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    // 1) Kích hoạt built-in validation của browser
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
+    // 2) Tiếp tục kiểm tra mật khẩu
+    const pwd  = document.getElementById('password').value;
+    const cpwd = document.getElementById('confirmPassword').value;
+    if (pwd !== cpwd) {
+      return alert('Mật khẩu xác nhận không khớp!');
+    }
+    // 3) Đóng gói data & gọi API
+    const userData = {
+      email:       document.getElementById('email').value,
+      password:    pwd,
+      first_name:  document.getElementById('firstName').value,
+      last_name:   document.getElementById('lastName').value,
+      phone:       document.getElementById('phone').value,
+      date_birth:  document.getElementById('dateBirth').value,
+      account_type: document.querySelector('input[name="accountType"]:checked').value
+    };
+    try {
+      const res = await fetch('/account/registration', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userData)
+      });
+      if (res.ok) {
+        window.location.href = '/';
+      } else {
+        const payload = await res.json();
+        const msg = payload.detail
+          ? Array.isArray(payload.detail)
+            ? payload.detail.map(d => d.msg || d).join(', ')
+            : payload.detail
+          : 'Đăng ký thất bại';
+        alert(msg);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Lỗi kết nối tới máy chủ');
+    }
+  });
+</script>
+{% endblock %}

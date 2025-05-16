@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Ký hợp đồng phòng trọ{% endblock %}
+
+{% block head %}
+<style>
+  body { background-color: #f8f9fa; }
+  .login-container {
+    max-width: 700px;
+    margin: 100px auto;
+    padding: 30px;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  }
+  .btn-login {
+    background-color: #0d6efd;
+    color: white;
+    font-weight: 600;
+    padding: 10px;
+    border-radius: 5px;
+    width: 100%;
+    border: 1px solid #0d6efd;
+    transition: background-color .2s, border-color .2s;
+  }
+  .btn-login:hover {
+    background-color: #0b5ed7;
+    border-color: #0a58ca;
+  }
+  .signature-img {
+    max-height: 200px;
+    margin-bottom: 15px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <h2>Ký hợp đồng phòng trọ</h2>
+  <p><strong>Phòng:</strong> {{ listing.title }}</p>
+  <p>
+    <strong>Thời gian:</strong>
+    {{ booking.start_date.strftime('%Y-%m-%d') }} –
+    {{ booking.end_date.strftime('%Y-%m-%d') }}
+  </p>
+  <hr>
+
+  <form action="" method="post" enctype="multipart/form-data">
+    {% if user.email == booking.tenant %}
+      <!-- ▼ Tenant điền thông tin & upload chữ ký ▼ -->
+      <div class="mb-3">
+        <label class="form-label">Họ và tên</label>
+        <input type="text" name="tenant_name" class="form-control" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Số điện thoại</label>
+        <input type="text" name="tenant_phone" class="form-control" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">CCCD/CMND</label>
+        <input type="text" name="tenant_id_card" class="form-control" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Chữ ký điện tử (tenant)</label>
+        <input type="file" name="signature" accept="image/*" class="form-control" required>
+      </div>
+
+    {% elif user.email == listing.owner %}
+      <!-- ▲ Chủ nhà xem thông tin tenant ▲ -->
+      <h5>Thông tin người thuê</h5>
+      <p><strong>Họ và tên:</strong> {{ booking.tenant_name }}</p>
+      <p><strong>Điện thoại:</strong> {{ booking.tenant_phone }}</p>
+      <p><strong>CCCD/CMND:</strong> {{ booking.tenant_id_card }}</p>
+      {% if booking.tenant_signature %}
+        <h6>Chữ ký người thuê:</h6>
+        <a href="{{ booking.tenant_signature }}" target="_blank">
+          <img src="{{ booking.tenant_signature }}"
+               class="img-thumbnail mb-3"
+               style="max-width:200px;" alt="Tenant signature">
+        </a>
+      {% endif %}
+
+      <hr>
+      <!-- ▼ Chủ nhà upload chữ ký ▼ -->
+      <div class="mb-3">
+        <label class="form-label">Chữ ký điện tử (Người cho thuê)</label>
+        <input type="file" name="signature" accept="image/*" class="form-control" required>
+      </div>
+      <input type="hidden" name="action" value="accepted">
+    {% endif %}
+
+    <button type="submit" class="btn btn-success">Xác nhận ký hợp đồng</button>
+    <a href="{{ url_for('my_bookings') }}" class="btn btn-secondary ms-2">Hủy</a>
+  </form>
+</div>
+{% endblock %}
