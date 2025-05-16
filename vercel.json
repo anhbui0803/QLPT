@@ -7,7 +7,16 @@
       }
     ],
     "routes": [
-      { "src": "/(.*)", "dest": "main.py" },
+      { "src": "/(.*)", "dest": "main.py", 
+        "methods": [
+                    "GET",
+                    "POST",
+                    "PUT",
+                    "PATCH",
+                    "DELETE",
+                    "OPTIONS"
+          ]
+      },
       { "src": "/static/(.*)", "headers": { "cache-control": "public, max-age=31536000" }, "dest": "/static/$1" }
     ]
   }
