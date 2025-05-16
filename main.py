@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, Form, HTTPException, status, UploadFile, File
+from fastapi import FastAPI, Request, Form, HTTPException, status, UploadFile, File, Response
 import re
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
@@ -14,24 +14,24 @@ from urllib.parse import urlparse
 import smtplib
 from email.message import EmailMessage
 from passlib.context import CryptContext
-# from producer import producer
-from contextlib import asynccontextmanager
 
 # ← import db và SECRET_KEY từ config
 from config import db, SECRET_KEY
 
-
-# @asynccontextmanager
-# async def lifespan(app: FastAPI):
-#     # startup
-#     await producer.start()
-#     yield
-#     # shutdown
-#     await producer.stop()
-
+BASE_DIR = os.path.dirname(__file__)
 
 app = FastAPI(title="hotel_service")
-app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# ← XOÁ hoặc comment mount cũ:
+# app.mount("/public/static", StaticFiles(directory="/public/static"), name="static")
+
+# Thay bằng serve trực tiếp từ thư mục static/ ở project root
+app.mount(
+    "/static",
+    StaticFiles(directory=os.path.join(BASE_DIR, "static")),
+    name="static",
+)
+
 templates = Jinja2Templates(directory="templates")
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -200,7 +200,11 @@ async def login_page(request: Request):
     )
 
 
-@app.get("/account/register", tags=["account"])
+@app.get(
+    "/account/register",
+    tags=["account"],
+    operation_id="account_register_page_get"
+)
 async def register_page(request: Request):
     return templates.TemplateResponse(
         "register.html",
@@ -651,7 +655,12 @@ async def book_listing(
     )
 
 
-@app.get("/account/bookings/{booking_id}/sign", response_class=HTMLResponse, tags=["booking"])
+@app.get(
+    "/account/bookings/{booking_id}/sign",
+    response_class=HTMLResponse,
+    tags=["booking"],
+    operation_id="account_booking_sign_page_get"
+)
 async def sign_contract_page(request: Request, booking_id: str):
     user = request.session.get("user")
     if not user:
@@ -681,7 +690,12 @@ async def sign_contract_page(request: Request, booking_id: str):
     })
 
 
-@app.post("/account/bookings/{booking_id}/sign", response_class=HTMLResponse, tags=["booking"])
+@app.post(
+    "/account/bookings/{booking_id}/sign",
+    response_class=HTMLResponse,
+    tags=["booking"],
+    operation_id="account_booking_sign_post"
+)
 async def sign_contract(
     request: Request,
     booking_id: str,
@@ -732,12 +746,22 @@ async def sign_contract(
 # -------------- QUÊN MẬT KHẨU --------------
 
 
-@app.get("/account/forgot-password", response_class=HTMLResponse, tags=["account"])
+@app.get(
+    "/account/forgot-password",
+    response_class=HTMLResponse,
+    tags=["account"],
+    operation_id="account_forgot_password_page_get"
+)
 async def forgot_password_page(request: Request):
     return templates.TemplateResponse("forgot_password.html", {"request": request})
 
 
-@app.post("/account/forgot-password", response_class=HTMLResponse, tags=["account"])
+@app.post(
+    "/account/forgot-password",
+    response_class=HTMLResponse,
+    tags=["account"],
+    operation_id="account_forgot_password_post"
+)
 async def forgot_password(
     request: Request,
     email: str = Form(...)
@@ -760,7 +784,12 @@ async def forgot_password(
     return RedirectResponse("/account/forgot-password/sent", status_code=status.HTTP_303_SEE_OTHER)
 
 
-@app.get("/account/forgot-password/sent", response_class=HTMLResponse, tags=["account"])
+@app.get(
+    "/account/forgot-password/sent",
+    response_class=HTMLResponse,
+    tags=["account"],
+    operation_id="account_forgot_password_sent_page_get"
+)
 async def forgot_password_sent(request: Request):
     return templates.TemplateResponse("forgot_password_sent.html", {"request": request})
 
@@ -827,12 +856,13 @@ async def reset_password(
 @app.get("/favicon.ico", include_in_schema=False)
 async def favicon():
     """
-    Trả về favicon để khỏi bị 404 log lỗi.
+    Serve favicon.ico từ thư mục static/ hoặc trả 204 nếu chưa có file.
     """
-    # hoặc nếu dùng public/static:
-    fp = os.path.join("public", "static", "favicon.ico")
+    fp = os.path.join(BASE_DIR, "static", "favicon.ico")
+    if not os.path.exists(fp):
+        # nếu chưa đặt favicon, trả về 204 No Content để khỏi crash
+        return Response(status_code=204)
     return FileResponse(fp)
-
 
 # if __name__ == "__main__":
 #     uvicorn.run(app, host="127.0.0.1", port=8000)
