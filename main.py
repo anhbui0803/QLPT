@@ -11,7 +11,7 @@ from hotel_service.review.review_routers import review_router
 from hotel_service.rating.routers import rating_router
 from payment.payment_routers import payment_router
 from starlette.middleware.sessions import SessionMiddleware
-from fastapi.responses import RedirectResponse, HTMLResponse
+from fastapi.responses import RedirectResponse, HTMLResponse, FileResponse
 import os
 import uuid
 from datetime import datetime, timezone, date, timedelta
@@ -20,14 +20,26 @@ from typing import List, Tuple, Optional
 from urllib.parse import urlparse
 import smtplib
 from email.message import EmailMessage
-import uvicorn
 from passlib.context import CryptContext
+from producer import producer
+from contextlib import asynccontextmanager
 
 # ← import db và SECRET_KEY từ config
 from config import db, SECRET_KEY
 
-app = FastAPI(title="hotel_service")
-app.mount("/public/static", StaticFiles(directory="/public/static"), name="public/static")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # startup
+    await producer.start()
+    yield
+    # shutdown
+    await producer.stop()
+
+
+app = FastAPI(title="hotel_service", lifespan=lifespan)
+app.mount("/public/static", StaticFiles(directory="/public/static"),
+          name="public/static")
 templates = Jinja2Templates(directory="templates")
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -828,5 +840,15 @@ async def reset_password(
     return RedirectResponse("/account/login?reset=success", status_code=status.HTTP_303_SEE_OTHER)
 
 
-if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    """
+    Trả về favicon để khỏi bị 404 log lỗi.
+    """
+    # hoặc nếu dùng public/static:
+    fp = os.path.join("public", "static", "favicon.ico")
+    return FileResponse(fp)
+
+
+# if __name__ == "__main__":
+#     uvicorn.run(app, host="127.0.0.1", port=8000)
