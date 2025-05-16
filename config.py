@@ -4,7 +4,7 @@ import os
 from motor.motor_asyncio import AsyncIOMotorClient
 
 # Lấy SECRET_KEY từ env hoặc dùng default
-SECRET_KEY = os.getenv("SESSION_SECRET")
+SECRET_KEY = os.getenv("SECRET_KEY")
 
 # Kết nối MongoDB
 MONGODB_URL = os.getenv("MONGODB")

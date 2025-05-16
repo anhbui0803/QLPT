@@ -27,7 +27,7 @@ from passlib.context import CryptContext
 from config import db, SECRET_KEY
 
 app = FastAPI(title="hotel_service")
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/public/static", StaticFiles(directory="/public/static"), name="public/static")
 templates = Jinja2Templates(directory="templates")
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
