@@ -174,19 +174,20 @@ async def root(
     docs = await cursor.skip((page - 1) * page_size).limit(page_size).to_list(page_size)
 
     # 4) Render
-    return templates.TemplateResponse(
-        "index.html",
-        {
-            "request": request,
-            "listings": docs,
-            "page": page,
-            "pages": pages,
-            "district": district or "",
-            "price": price or "",
-            "type": type or "",
-            "districts": district_options,
-        }
-    )
+    # return templates.TemplateResponse(
+    #     "index.html",
+    #     {
+    #         "request": request,
+    #         "listings": docs,
+    #         "page": page,
+    #         "pages": pages,
+    #         "district": district or "",
+    #         "price": price or "",
+    #         "type": type or "",
+    #         "districts": district_options,
+    #     }
+    # )
+    return HTMLResponse(content=open(os.path.join(BASE_DIR, "templates", "index.html")).read())
 
 
 @app.get("/account/login", tags=["account"])
