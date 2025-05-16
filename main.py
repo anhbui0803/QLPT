@@ -22,9 +22,6 @@ BASE_DIR = os.path.dirname(__file__)
 
 app = FastAPI(title="hotel_service")
 
-# ← XOÁ hoặc comment mount cũ:
-# app.mount("/public/static", StaticFiles(directory="/public/static"), name="static")
-
 # Thay bằng serve trực tiếp từ thư mục static/ ở project root
 app.mount(
     "/static",

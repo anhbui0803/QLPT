@@ -4,6 +4,7 @@ from pydantic_settings import BaseSettings
 class Configs(BaseSettings):
     secret_key: str
     mongodb: str
+    mongodb_uri: str
 
     algorithm: str
     exp_time: int
