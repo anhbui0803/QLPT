@@ -94,10 +94,10 @@ type_map = {
 type_options: List[Tuple[str, str]] = list(type_map.items())
 
 # -------------- SMTP CẤU HÌNH --------------
-SMTP_HOST = "smtp.gmail.com"
-SMTP_PORT = 587
-SMTP_USER = "anhbqtq@gmail.com"
-SMTP_PASSWORD = "sfutttrhnrklalui"
+SMTP_HOST = os.getenv("SMTP_HOST")
+SMTP_PORT = int(os.getenv("SMTP_PORT", 587))
+SMTP_USER = os.getenv("SMTP_USER")
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
 
 
 async def send_reset_email(request: Request, to_email: str, token: str):
