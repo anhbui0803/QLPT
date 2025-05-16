@@ -1,3 +1,5 @@
+import re
+from math import ceil
 from fastapi import FastAPI, Request, Form, HTTPException, status, UploadFile, File, Response
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
@@ -27,7 +29,7 @@ app.mount(
     name="static",
 )
 
-templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
@@ -130,60 +132,60 @@ Trân trọng,
 
 @app.get("/", tags=["listing"])
 async def root(
-    # request: Request,
-    # page: int = 1,
-    # district: str | None = None,
-    # price: str | None = None,
-    # type: str | None = None,
+    request: Request,
+    page: int = 1,
+    district: str | None = None,
+    price: str | None = None,
+    type: str | None = None,
 ):
-    # page_size = 6
+    page_size = 6
 
-    # # 1) Build filter
-    # filt: dict = {}
-    # if district:
-    #     # Dùng regex để so khớp case‐insensitive
-    #     filt["district"] = re.compile(
-    #         f"^{re.escape(district)}$", re.IGNORECASE)
-    # if type:
-    #     filt["type"] = type
+    # 1) Build filter
+    filt: dict = {}
+    if district:
+        # Dùng regex để so khớp case‐insensitive
+        filt["district"] = re.compile(
+            f"^{re.escape(district)}$", re.IGNORECASE)
+    if type:
+        filt["type"] = type
 
-    # price_map = {
-    #     "0-2000000": (0, 2_000_000),
-    #     "2000000-5000000": (2_000_000, 5_000_000),
-    #     "5000000-10000000": (5_000_000, 10_000_000),
-    #     "10000000-": (10_000_000, None),
-    # }
-    # if price and price in price_map:
-    #     low, high = price_map[price]
-    #     cond: dict = {}
-    #     if low is not None:
-    #         cond["$gte"] = low
-    #     if high is not None:
-    #         cond["$lte"] = high
-    #     filt["price"] = cond
+    price_map = {
+        "0-2000000": (0, 2_000_000),
+        "2000000-5000000": (2_000_000, 5_000_000),
+        "5000000-10000000": (5_000_000, 10_000_000),
+        "10000000-": (10_000_000, None),
+    }
+    if price and price in price_map:
+        low, high = price_map[price]
+        cond: dict = {}
+        if low is not None:
+            cond["$gte"] = low
+        if high is not None:
+            cond["$lte"] = high
+        filt["price"] = cond
 
-    # # 2) Count & pagination
-    # total = await db.listings.count_documents(filt)
-    # pages = ceil(total / page_size) if total else 1
-    # page = max(1, min(page, pages))
+    # 2) Count & pagination
+    total = await db.listings.count_documents(filt)
+    pages = ceil(total / page_size) if total else 1
+    page = max(1, min(page, pages))
 
-    # # 3) Query this page
-    # cursor = db.listings.find(filt).sort("created_at", -1)
-    # docs = await cursor.skip((page - 1) * page_size).limit(page_size).to_list(page_size)
+    # 3) Query this page
+    cursor = db.listings.find(filt).sort("created_at", -1)
+    docs = await cursor.skip((page - 1) * page_size).limit(page_size).to_list(page_size)
 
     # 4) Render
     return templates.TemplateResponse(
         "index.html",
-        # {
-        #     "request": request,
-        #     "listings": docs,
-        #     "page": page,
-        #     "pages": pages,
-        #     "district": district or "",
-        #     "price": price or "",
-        #     "type": type or "",
-        #     "districts": district_options,
-        # }
+        {
+            "request": request,
+            "listings": docs,
+            "page": page,
+            "pages": pages,
+            "district": district or "",
+            "price": price or "",
+            "type": type or "",
+            "districts": district_options,
+        }
     )
 
 
