@@ -2,14 +2,7 @@ from fastapi import FastAPI, Request, Form, HTTPException, status, UploadFile, F
 import re
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-from booking.routers import booking_router
 from account.routers import account_router
-from hotel_service.hotel.hotel_routers import hotel_routers
-from hotel_service.apartment.apartment_routers import apartment_router
-from hotel_service.favorite.favorite_routers import favorite_router
-from hotel_service.review.review_routers import review_router
-from hotel_service.rating.routers import rating_router
-from payment.payment_routers import payment_router
 from starlette.middleware.sessions import SessionMiddleware
 from fastapi.responses import RedirectResponse, HTMLResponse, FileResponse
 import os
@@ -21,23 +14,23 @@ from urllib.parse import urlparse
 import smtplib
 from email.message import EmailMessage
 from passlib.context import CryptContext
-from producer import producer
+# from producer import producer
 from contextlib import asynccontextmanager
 
 # ← import db và SECRET_KEY từ config
 from config import db, SECRET_KEY
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # startup
-    await producer.start()
-    yield
-    # shutdown
-    await producer.stop()
+# @asynccontextmanager
+# async def lifespan(app: FastAPI):
+#     # startup
+#     await producer.start()
+#     yield
+#     # shutdown
+#     await producer.stop()
 
 
-app = FastAPI(title="hotel_service", lifespan=lifespan)
+app = FastAPI(title="hotel_service")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -71,14 +64,7 @@ app.add_middleware(
     https_only=True,
 )
 
-app.include_router(hotel_routers)
-app.include_router(booking_router)
 app.include_router(account_router)
-app.include_router(apartment_router)
-app.include_router(favorite_router)
-app.include_router(review_router)
-app.include_router(rating_router)
-app.include_router(payment_router)
 
 # ─── Danh sách cố định các Quận/Huyện Hà Nội ────────────────────────────────
 district_map = {

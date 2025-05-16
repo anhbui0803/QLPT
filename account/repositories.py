@@ -7,7 +7,7 @@ from fastapi import status
 
 from stripe import Customer
 from configs import get_configs
-from payment.decorators import stripe_decorator_error
+# from payment.decorators import stripe_decorator_error
 
 
 class AccountRepository(AccountRepositoryInterface):
@@ -21,7 +21,7 @@ class AccountRepository(AccountRepositoryInterface):
         return account
 
     @staticmethod
-    @stripe_decorator_error
+    # @stripe_decorator_error
     async def __create_stripe_account(account_data: CreateAccountSchema):
         return Customer.create(
             api_key=get_configs().stripe_api_key,

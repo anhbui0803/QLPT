@@ -11,14 +11,14 @@ client = motor.motor_asyncio.AsyncIOMotorClient(MONGODB_URL)
 hotel_database = client.hotel_database
 
 # Initialize collections
-booking_collection = hotel_database.bookings
-hotel_collection = hotel_database.hotels
-apartment_collection = hotel_database.apartments
+# booking_collection = hotel_database.bookings
+# hotel_collection = hotel_database.hotels
+# apartment_collection = hotel_database.apartments
 account_collection = hotel_database.accounts
-favorite_collection = hotel_database.favorites
-review_collection = hotel_database.reviews
-rating_collection = hotel_database.ratings
-payment_collection = hotel_database.payments
+# favorite_collection = hotel_database.favorites
+# review_collection = hotel_database.reviews
+# rating_collection = hotel_database.ratings
+# payment_collection = hotel_database.payments
 
 # Database connection test function
 async def check_database_connection():
