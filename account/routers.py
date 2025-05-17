@@ -5,17 +5,44 @@ from .deps import get_account_service
 from .schemas import CreateAccountSchema, AccountSchema, TokenSchema, AccountType
 from .auth_logic import AuthLogic
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
-from config import db, SECRET_KEY
+# from config import db, SECRET_KEY
 from datetime import datetime, date, timezone, timedelta, time
 from email.message import EmailMessage
 import os
 import smtplib
 import uuid
+from dotenv import load_dotenv
+import certifi
+from motor.motor_asyncio import AsyncIOMotorClient
+
+load_dotenv()
 
 templates = Jinja2Templates(directory="templates")
 account_router = APIRouter(prefix='/account', tags=['account'])
 
 # Serializer dùng chung để sign/verify token
+SECRET_KEY = os.getenv("SECRET_KEY")
+MONGODB_URI = os.getenv("MONGODB_URI")
+if not MONGODB_URI:
+    raise RuntimeError("MONGODB_URI chưa được thiết lập!")
+
+
+async def get_db():
+    """
+    Mỗi lần có request, ta khởi tạo một client mới trên event‐loop hiện tại,
+    và đóng nó khi xong request.
+    """
+    client = AsyncIOMotorClient(
+        MONGODB_URI,
+        tls=True,
+        tlsCAFile=certifi.where(),
+    )
+    try:
+        yield client["hotel_database"]
+    finally:
+        client.close()
+
+
 serializer = URLSafeTimedSerializer(SECRET_KEY)
 
 # --- cấu hình SMTP ---
@@ -74,7 +101,7 @@ Trân trọng,
 
 
 @account_router.get("/register", tags=["account"])
-async def register_page(request: Request):
+async def register_page(request: Request, db=Depends(get_db)):
     """Render the registration page"""
     return templates.TemplateResponse("register.html", {"request": request})
 
@@ -88,7 +115,8 @@ async def register_page(request: Request):
 async def register(
     request: Request,
     account_data: CreateAccountSchema,
-    service_data=Depends(get_account_service)
+    service_data=Depends(get_account_service),
+    db=Depends(get_db)
 ):
     """Handle registration API request"""
     try:
@@ -117,7 +145,8 @@ async def login(
     request: Request,
     email: str = Form(...),
     password: str = Form(...),
-    service_data=Depends(get_account_service)
+    service_data=Depends(get_account_service),
+    db=Depends(get_db)
 ):
     try:
         # 1) authenticate & get JWT
@@ -148,7 +177,7 @@ async def login(
 
 
 @account_router.get("/logout", tags=["account"])
-async def logout(request: Request):
+async def logout(request: Request, db=Depends(get_db)):
     # Clear session
     request.session.pop("user", None)
     return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
@@ -160,7 +189,7 @@ async def logout(request: Request):
     tags=["account"],
     name="forgot_password_page"
 )
-async def forgot_password_page(request: Request):
+async def forgot_password_page(request: Request, db=Depends(get_db)):
     """
     Hiển thị form nhập email để gửi link đặt lại mật khẩu
     """
@@ -175,7 +204,8 @@ async def forgot_password_page(request: Request):
 )
 async def forgot_password(
     request: Request,
-    email: str = Form(...)
+    email: str = Form(...),
+    db=Depends(get_db)
 ):
     """
     Xử lý form quên mật khẩu, sinh token và gửi email qua SMTP
@@ -207,12 +237,12 @@ async def forgot_password(
     tags=["account"],
     name="forgot_password_sent"
 )
-async def forgot_password_sent(request: Request):
+async def forgot_password_sent(request: Request, db=Depends(get_db)):
     return templates.TemplateResponse("forgot_password_sent.html", {"request": request})
 
 
 @account_router.get("/reset-password")
-async def reset_password_page(request: Request, token: str | None = None):
+async def reset_password_page(request: Request, token: str | None = None, db=Depends(get_db)):
     """
     Hiển thị form đặt lại mật khẩu nếu token hợp lệ
     """
@@ -239,7 +269,8 @@ async def reset_password(
     request: Request,
     token: str = Form(...),
     password: str = Form(...),
-    confirm_password: str = Form(...)
+    confirm_password: str = Form(...),
+    db=Depends(get_db)
 ):
     """
     Xử lý form đặt lại mật khẩu
@@ -275,7 +306,7 @@ async def reset_password(
     tags=["booking"],
     name="my_bookings"
 )
-async def my_bookings(request: Request):
+async def my_bookings(request: Request, db=Depends(get_db)):
     user = request.session.get("user")
     if not user:
         return RedirectResponse("/account/login", status_code=status.HTTP_303_SEE_OTHER)
@@ -313,7 +344,7 @@ async def my_bookings(request: Request):
     name="renew_request_page",
     tags=["booking"]
 )
-async def renew_request_page(request: Request, booking_id: str):
+async def renew_request_page(request: Request, booking_id: str, db=Depends(get_db)):
     user = request.session.get("user")
     if not user:
         return RedirectResponse("/account/login", status_code=status.HTTP_303_SEE_OTHER)
@@ -349,6 +380,7 @@ async def renew_request_action(
     request: Request,
     booking_id: str,
     action: str = Form(...),  # "accept" hoặc "reject"
+    db=Depends(get_db)
 ):
     user = request.session.get("user")
     if not user:
@@ -407,7 +439,7 @@ async def renew_request_action(
     response_class=HTMLResponse,
     name="sign_contract_page"
 )
-async def sign_contract_page(request: Request, booking_id: str):
+async def sign_contract_page(request: Request, booking_id: str, db=Depends(get_db)):
     user = request.session.get("user")
     if not user:
         return RedirectResponse("/account/login", status_code=status.HTTP_303_SEE_OTHER)
@@ -445,6 +477,7 @@ async def sign_contract(
     tenant_id_card:  str = Form(None),
     # riêng owner
     action:          str = Form("accepted"),
+    db=Depends(get_db)
 ):
     user = request.session.get("user")
     if not user:
@@ -544,7 +577,7 @@ async def sign_contract(
     tags=["notification"],
     name="notifications_page"
 )
-async def notifications_page(request: Request):
+async def notifications_page(request: Request, db=Depends(get_db)):
     user = request.session.get("user")
     if not user:
         return RedirectResponse("/account/login", status_code=status.HTTP_303_SEE_OTHER)
@@ -572,7 +605,8 @@ async def notifications_page(request: Request):
 async def respond_notification(
     request: Request,
     notif_id: str,
-    action: str = Form(...)
+    action: str = Form(...),
+    db=Depends(get_db)
 ):
     user = request.session.get("user")
     if not user:
@@ -627,7 +661,7 @@ async def respond_notification(
     tags=["booking"],
     name="view_contract"
 )
-async def view_contract(request: Request, booking_id: str):
+async def view_contract(request: Request, booking_id: str, db=Depends(get_db)):
     user = request.session.get("user")
     if not user:
         return RedirectResponse("/account/login", status_code=status.HTTP_303_SEE_OTHER)
@@ -655,6 +689,7 @@ async def book_listing(
     listing_id: str,
     start_date: str = Form(...),
     end_date:   str = Form(...),
+    db=Depends(get_db)
 ):
     user = request.session.get("user")
     if not user:
