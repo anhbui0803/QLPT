@@ -1,6 +1,6 @@
 import re
 from math import ceil
-from fastapi import FastAPI, Request, Form, HTTPException, status, UploadFile, File, Response
+from fastapi import FastAPI, Request, Form, HTTPException, status, UploadFile, File, Response, Depends
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from account.routers import account_router
@@ -22,6 +22,7 @@ import certifi
 from pymongo import MongoClient
 from motor.motor_asyncio import AsyncIOMotorClient
 from dotenv import load_dotenv
+import uvicorn
 
 
 load_dotenv()
@@ -42,38 +43,24 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # globals để endpoint sử dụng
 SECRET_KEY = os.getenv("SECRET_KEY")
-mongo_client: AsyncIOMotorClient | None = None
-db = None  # sẽ gán vào startup
 MONGODB_URI = os.getenv("MONGODB_URI")
+if not MONGODB_URI:
+    raise RuntimeError("MONGODB_URI chưa được thiết lập!")
 
-
-@app.on_event("startup")
-def on_startup():
-    global mongo_client, db, MONGODB_URI
-
-    # 1) Sync client dùng để "ping" ngay lúc startup
-    sync = MongoClient(
-        MONGODB_URI,
-        tls=True,
-        tlsCAFile=certifi.where(),
-        serverSelectionTimeoutMS=5_000,
-    )
-    sync.admin.command("ping")  # nếu ko connect được sẽ crash ngay
-
-    # 2) Async client khởi tạo trong đúng event‐loop đang mở
-    mongo_client = AsyncIOMotorClient(
+async def get_db():
+    """
+    Mỗi lần có request, ta khởi tạo một client mới trên event‐loop hiện tại,
+    và đóng nó khi xong request.
+    """
+    client = AsyncIOMotorClient(
         MONGODB_URI,
         tls=True,
         tlsCAFile=certifi.where(),
     )
-    db = mongo_client["hotel_database"]
-
-
-@app.on_event("shutdown")
-def on_shutdown():
-    global mongo_client
-    if mongo_client:
-        mongo_client.close()
+    try:
+        yield client["hotel_database"]
+    finally:
+        client.close()
 
 
 def format_price(value):
@@ -187,6 +174,7 @@ async def root(
     district: str | None = None,
     price: str | None = None,
     type: str | None = None,
+    db=Depends(get_db),
 ):
     page_size = 6
 
@@ -240,7 +228,7 @@ async def root(
 
 
 @app.get("/account/login", tags=["account"])
-async def login_page(request: Request):
+async def login_page(request: Request, db=Depends(get_db)):
     return templates.TemplateResponse(
         "login.html",
         {"request": request}
@@ -252,7 +240,7 @@ async def login_page(request: Request):
     tags=["account"],
     operation_id="account_register_page_get"
 )
-async def register_page(request: Request):
+async def register_page(request: Request, db=Depends(get_db)):
     return templates.TemplateResponse(
         "register.html",
         {"request": request}
@@ -260,7 +248,7 @@ async def register_page(request: Request):
 
 
 @app.get("/dang-tin", tags=["listing"])
-async def create_listing_page(request: Request):
+async def create_listing_page(request: Request, db=Depends(get_db)):
     user = request.session.get("user")
     if not user:
         return RedirectResponse("/account/login", status_code=status.HTTP_303_SEE_OTHER)
@@ -286,6 +274,7 @@ async def create_listing(
     slots: int = Form(...),
     images: list[UploadFile] = File([]),
     contract_images: list[UploadFile] = File([]),
+    db=Depends(get_db)
 ):
     user = request.session.get("user")
     if not user:
@@ -346,7 +335,7 @@ async def create_listing(
 
 
 @app.get("/listing/{listing_id}", response_class=HTMLResponse, tags=["listing"])
-async def listing_detail(request: Request, listing_id: str):
+async def listing_detail(request: Request, listing_id: str, db=Depends(get_db)):
     listing = await db.listings.find_one({"id": listing_id})
     if not listing:
         raise HTTPException(404, "Không tìm thấy bài đăng.")
@@ -379,7 +368,7 @@ async def listing_detail(request: Request, listing_id: str):
 
 
 @app.get("/listing/{listing_id}/edit", response_class=HTMLResponse, tags=["listing"])
-async def edit_listing_page(request: Request, listing_id: str):
+async def edit_listing_page(request: Request, listing_id: str, db=Depends(get_db)):
     # 1) Bắt login
     user = request.session.get("user")
     if not user:
@@ -423,6 +412,7 @@ async def edit_listing(
     contract_images: List[UploadFile] = File([]),
     remove_images: List[str] = Form([]),
     remove_contract_images: List[str] = Form([]),
+    db=Depends(get_db)
 ):
     user = request.session.get("user")
     if not user:
@@ -496,7 +486,7 @@ async def edit_listing(
 
 
 @app.post("/listing/{listing_id}/delete", response_class=HTMLResponse, tags=["listing"])
-async def delete_listing(request: Request, listing_id: str):
+async def delete_listing(request: Request, listing_id: str, db=Depends(get_db)):
     """
     Xóa hẳn một tin đăng (và file ảnh đi kèm), rồi trả về landing page.
     """
@@ -525,7 +515,7 @@ async def delete_listing(request: Request, listing_id: str):
 
 
 @app.get("/account/listings", response_class=HTMLResponse, tags=["account"])
-async def my_listings(request: Request):
+async def my_listings(request: Request, db=Depends(get_db)):
     # 1) Kiểm tra login
     user = request.session.get("user")
     if not user:
@@ -550,7 +540,7 @@ async def my_listings(request: Request):
     tags=["booking"],
     name="book_listing_page"     # ← đặt tên rõ ràng
 )
-async def book_listing_page(request: Request, listing_id: str):
+async def book_listing_page(request: Request, listing_id: str, db=Depends(get_db)):
     user = request.session.get("user")
     if not user:
         return RedirectResponse(request.url_for("login"), status_code=status.HTTP_303_SEE_OTHER)
@@ -593,6 +583,7 @@ async def book_listing(
     tenant_phone:  Optional[str] = Form(None),
     tenant_id_card: Optional[str] = Form(None),
     signature:     Optional[UploadFile] = File(None),
+    db=Depends(get_db)
 ):
     user = request.session.get("user")
     if not user:
@@ -708,7 +699,7 @@ async def book_listing(
     tags=["booking"],
     operation_id="account_booking_sign_page_get"
 )
-async def sign_contract_page(request: Request, booking_id: str):
+async def sign_contract_page(request: Request, booking_id: str, db=Depends(get_db)):
     user = request.session.get("user")
     if not user:
         return RedirectResponse("/account/login", status_code=status.HTTP_303_SEE_OTHER)
@@ -746,7 +737,8 @@ async def sign_contract_page(request: Request, booking_id: str):
 async def sign_contract(
     request: Request,
     booking_id: str,
-    signature: UploadFile = File(...)
+    signature: UploadFile = File(...),
+    db=Depends(get_db)
 ):
     user = request.session.get("user")
     if not user:
@@ -799,7 +791,7 @@ async def sign_contract(
     tags=["account"],
     operation_id="account_forgot_password_page_get"
 )
-async def forgot_password_page(request: Request):
+async def forgot_password_page(request: Request, db=Depends(get_db)):
     return templates.TemplateResponse("forgot_password.html", {"request": request})
 
 
@@ -811,7 +803,8 @@ async def forgot_password_page(request: Request):
 )
 async def forgot_password(
     request: Request,
-    email: str = Form(...)
+    email: str = Form(...),
+    db=Depends(get_db)
 ):
     # 1) Kiểm tra user
     user = await db.users.find_one({"email": email})
@@ -843,7 +836,7 @@ async def forgot_password_sent(request: Request):
 
 # -------------- ĐẶT LẠI MẬT KHẨU --------------
 @app.get("/account/reset-password/{token}", response_class=HTMLResponse, tags=["account"])
-async def reset_password_page(request: Request, token: str):
+async def reset_password_page(request: Request, token: str, db=Depends(get_db)):
     rec = await db.password_resets.find_one({"token": token})
     if not rec:
         return templates.TemplateResponse("reset_password_invalid.html", {"request": request})
@@ -867,7 +860,8 @@ async def reset_password(
     request: Request,
     token:    str,
     password: str = Form(...),
-    confirm:  str = Form(...)
+    confirm:  str = Form(...),
+    db=Depends(get_db)
 ):
     if password != confirm:
         return templates.TemplateResponse("reset_password.html", {
