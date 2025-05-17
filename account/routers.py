@@ -14,6 +14,7 @@ import uuid
 from dotenv import load_dotenv
 import certifi
 from motor.motor_asyncio import AsyncIOMotorClient
+from config import get_db, SECRET_KEY
 
 load_dotenv()
 
@@ -21,26 +22,26 @@ templates = Jinja2Templates(directory="templates")
 account_router = APIRouter(prefix='/account', tags=['account'])
 
 # Serializer dùng chung để sign/verify token
-SECRET_KEY = os.getenv("SECRET_KEY")
-MONGODB_URI = os.getenv("MONGODB_URI")
-if not MONGODB_URI:
-    raise RuntimeError("MONGODB_URI chưa được thiết lập!")
+# SECRET_KEY = os.getenv("SECRET_KEY")
+# MONGODB_URI = os.getenv("MONGODB_URI")
+# if not MONGODB_URI:
+#     raise RuntimeError("MONGODB_URI chưa được thiết lập!")
 
 
-async def get_db():
-    """
-    Mỗi lần có request, ta khởi tạo một client mới trên event‐loop hiện tại,
-    và đóng nó khi xong request.
-    """
-    client = AsyncIOMotorClient(
-        MONGODB_URI,
-        tls=True,
-        tlsCAFile=certifi.where(),
-    )
-    try:
-        yield client["hotel_database"]
-    finally:
-        client.close()
+# async def get_db():
+#     """
+#     Mỗi lần có request, ta khởi tạo một client mới trên event‐loop hiện tại,
+#     và đóng nó khi xong request.
+#     """
+#     client = AsyncIOMotorClient(
+#         MONGODB_URI,
+#         tls=True,
+#         tlsCAFile=certifi.where(),
+#     )
+#     try:
+#         yield client["hotel_database"]
+#     finally:
+#         client.close()
 
 
 serializer = URLSafeTimedSerializer(SECRET_KEY)

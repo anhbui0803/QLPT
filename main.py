@@ -17,7 +17,7 @@ from email.message import EmailMessage
 from passlib.context import CryptContext
 
 # ← import db và SECRET_KEY từ config
-# from config import db, SECRET_KEY
+from config import get_db, SECRET_KEY
 import certifi
 from pymongo import MongoClient
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -42,25 +42,25 @@ templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # globals để endpoint sử dụng
-SECRET_KEY = os.getenv("SECRET_KEY")
-MONGODB_URI = os.getenv("MONGODB_URI")
-if not MONGODB_URI:
-    raise RuntimeError("MONGODB_URI chưa được thiết lập!")
+# SECRET_KEY = os.getenv("SECRET_KEY")
+# MONGODB_URI = os.getenv("MONGODB_URI")
+# if not MONGODB_URI:
+#     raise RuntimeError("MONGODB_URI chưa được thiết lập!")
 
-async def get_db():
-    """
-    Mỗi lần có request, ta khởi tạo một client mới trên event‐loop hiện tại,
-    và đóng nó khi xong request.
-    """
-    client = AsyncIOMotorClient(
-        MONGODB_URI,
-        tls=True,
-        tlsCAFile=certifi.where(),
-    )
-    try:
-        yield client["hotel_database"]
-    finally:
-        client.close()
+# async def get_db():
+#     """
+#     Mỗi lần có request, ta khởi tạo một client mới trên event‐loop hiện tại,
+#     và đóng nó khi xong request.
+#     """
+#     client = AsyncIOMotorClient(
+#         MONGODB_URI,
+#         tls=True,
+#         tlsCAFile=certifi.where(),
+#     )
+#     try:
+#         yield client["hotel_database"]
+#     finally:
+#         client.close()
 
 
 def format_price(value):
@@ -905,5 +905,5 @@ async def favicon():
         return Response(status_code=204)
     return FileResponse(fp)
 
-# if __name__ == "__main__":
-#     uvicorn.run(app, host="127.0.0.1", port=8000)
+if __name__ == "__main__":
+    uvicorn.run(app, host="127.0.0.1", port=8000)

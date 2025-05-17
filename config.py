@@ -2,7 +2,6 @@
 
 import os
 import certifi
-from pymongo import MongoClient
 from motor.motor_asyncio import AsyncIOMotorClient
 from dotenv import load_dotenv
 
@@ -13,23 +12,17 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 
 # Sau đó mới lấy biến môi trường
 MONGODB_URI = os.getenv("MONGODB_URI")
+print(MONGODB_URI)
 if not MONGODB_URI:
     raise RuntimeError("MISSING ENV VAR: MONGODB_URI")
 
-# 1) Synchronous client to do a blocking ping (SSL handshake) at import time
-_sync = MongoClient(
-    MONGODB_URI,
-    tls=True,
-    tlsCAFile=certifi.where(),
-    serverSelectionTimeoutMS=5_000,
-)
-# this will raise immediately if TLS fails
-_sync.admin.command("ping")
-
-# 2) Your async client (re-uses certifi bundle)
-_async_client = AsyncIOMotorClient(
-    MONGODB_URI,
-    tls=True,
-    tlsCAFile=certifi.where(),
-)
-db = _async_client["hotel_database"]
+async def get_db():
+    client = AsyncIOMotorClient(
+        MONGODB_URI,
+        tls=True,
+        tlsCAFile=certifi.where(),
+    )
+    try:
+        yield client["hotel_database"]
+    finally:
+        client.close()
